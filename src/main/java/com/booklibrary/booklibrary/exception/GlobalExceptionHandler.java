@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-  
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
     Map<String, String> errors = new HashMap<>();
@@ -25,8 +25,7 @@ public class GlobalExceptionHandler {
         LocalDateTime.now(),
         HttpStatus.BAD_REQUEST.value(),
         "Validation failed",
-        errors
-    );
+        errors);
 
     return ResponseEntity.badRequest().body(response);
   }
@@ -37,8 +36,7 @@ public class GlobalExceptionHandler {
         LocalDateTime.now(),
         HttpStatus.NOT_FOUND.value(),
         ex.getMessage(),
-        null
-    );
+        null);
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
   }
 
@@ -48,8 +46,7 @@ public class GlobalExceptionHandler {
         LocalDateTime.now(),
         HttpStatus.INTERNAL_SERVER_ERROR.value(),
         "Something went wrong: " + ex.getMessage(),
-        null
-    );
+        null);
 
     return ResponseEntity.internalServerError().body(response);
   }

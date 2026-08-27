@@ -40,18 +40,18 @@ public class BookController {
 
   @Operation(summary = "Get book by ID", description = "Retrieve a book by its ID")
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved the book"),
-    @ApiResponse(responseCode = "404", description = "Book not found")
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the book"),
+      @ApiResponse(responseCode = "404", description = "Book not found")
   })
   @GetMapping("/{id}")
   public ResponseEntity<Book> getBookById(@PathVariable Long id) {
     return ResponseEntity.ok(bookService.getBookById(id));
   }
-  
+
   @Operation(summary = "Create a new book", description = "Add a new book to the library")
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "201", description = "Book created successfully"),
-    @ApiResponse(responseCode = "400", description = "Invalid book data")
+      @ApiResponse(responseCode = "201", description = "Book created successfully"),
+      @ApiResponse(responseCode = "400", description = "Invalid book data")
   })
   @PostMapping
   public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
@@ -61,9 +61,9 @@ public class BookController {
 
   @Operation(summary = "Update an existing book", description = "Update the details of an existing book by its ID")
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "Book updated successfully"),
-    @ApiResponse(responseCode = "400", description = "Invalid book data"),
-    @ApiResponse(responseCode = "404", description = "Book not found")
+      @ApiResponse(responseCode = "200", description = "Book updated successfully"),
+      @ApiResponse(responseCode = "400", description = "Invalid book data"),
+      @ApiResponse(responseCode = "404", description = "Book not found")
   })
   @PutMapping("/{id}")
   public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book updatedBook) {
@@ -72,8 +72,8 @@ public class BookController {
 
   @Operation(summary = "Delete a book", description = "Remove a book from the library by its ID")
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
-    @ApiResponse(responseCode = "404", description = "Book not found")
+      @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
+      @ApiResponse(responseCode = "404", description = "Book not found")
   })
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteBook(@PathVariable Long id) {

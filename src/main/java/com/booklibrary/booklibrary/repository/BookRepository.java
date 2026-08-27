@@ -1,10 +1,8 @@
 package com.booklibrary.booklibrary.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.booklibrary.booklibrary.entity.Book;
 
-@Repository
-public interface BookRepository extends JpaRepository<Book, Long> {}
-
+public interface BookRepository extends JpaRepository<Book, Long> {
+}
