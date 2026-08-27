@@ -9,7 +9,7 @@ import com.booklibrary.booklibrary.repository.BookRepository;
 
 @Service
 public class BookService {
-  
+
   private final BookRepository bookRepository;
 
   public BookService(BookRepository bookRepository) {

@@ -17,12 +17,11 @@ import lombok.Data;
 @Table(name = "books")
 @Data
 public class Book {
-  
   @Schema(description = "Unique identifier of the book", example = "1")
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-  
+
   @Schema(description = "Title of the book", example = "The Great Gatsby")
   @NotBlank(message = "Title is mandatory")
   @Column(nullable = false)
@@ -35,7 +34,7 @@ public class Book {
 
   @Schema(description = "ISBN of the book", example = "9783161484100")
   @NotBlank(message = "ISBN is mandatory")
-  @Pattern(regexp="\\d{13}", message="ISBN must be a 13-digit number")
+  @Pattern(regexp = "\\d{13}", message = "ISBN must be a 13-digit number")
   @Column(unique = true)
   private String isbn;
 

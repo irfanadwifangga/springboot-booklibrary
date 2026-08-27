@@ -9,16 +9,17 @@ import io.swagger.v3.oas.models.info.Info;
 
 @Configuration
 public class OpenApiConfig {
+        @Bean
+        public OpenAPI customOpenAPI() {
+                return new OpenAPI()
+                                .info(new Info()
+                                                .title("Book Library API")
+                                                .version("1.0")
+                                                .description("API documentation for the Book Library application")
+                                                .contact(new Contact()
+                                                                .name("Irfana D. F")
+                                                                .email("irvanadwifangga@gmail.com")
+                                                                .url("https://www.irfana.web.id")));
 
-    @Bean
-    public OpenAPI customOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("Book Library API")
-                        .version("1.0")
-                        .description("API documentation for the Book Library application")
-                        .contact(new Contact()
-                                .name("Your Name")
-                                .email("irvanadwifangga@gmail.com")));
-    }
+        }
 }
