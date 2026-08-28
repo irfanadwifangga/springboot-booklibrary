@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.booklibrary.booklibrary.entity.Book;
 import com.booklibrary.booklibrary.service.BookService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +40,29 @@ public class BookController {
     return bookService.getAllBooks();
   }
 
+  @Operation(summary = "Search books", description = "Search books by a keyword matched against title or author")
+  @GetMapping("/search")
+  public List<Book> searchBooks(
+      @Parameter(description = "Keyword to match against title or author", example = "gatsby") @RequestParam String keyword) {
+    return bookService.searchBooks(keyword);
+  }
+
+  @Operation(summary = "Get books by category", description = "Retrieve all books belonging to a given category")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the books")
+  })
+  @GetMapping("/category/{categoryId}")
+  public List<Book> getBooksByCategory(@PathVariable Long categoryId) {
+    return bookService.getBooksByCategory(categoryId);
+  }
+
+  @Operation(summary = "Get low stock books", description = "Retrieve books whose stock is below the given threshold")
+  @GetMapping("/low-stock")
+  public List<Book> getLowStockBooks(
+      @Parameter(description = "Stock threshold", example = "5") @RequestParam(defaultValue = "5") Integer threshold) {
+    return bookService.getLowStockBooks(threshold);
+  }
+
   @Operation(summary = "Get book by ID", description = "Retrieve a book by its ID")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Successfully retrieved the book"),
@@ -51,7 +76,8 @@ public class BookController {
   @Operation(summary = "Create a new book", description = "Add a new book to the library")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "201", description = "Book created successfully"),
-      @ApiResponse(responseCode = "400", description = "Invalid book data")
+      @ApiResponse(responseCode = "400", description = "Invalid book data"),
+      @ApiResponse(responseCode = "404", description = "Category not found")
   })
   @PostMapping
   public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
@@ -63,7 +89,7 @@ public class BookController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Book updated successfully"),
       @ApiResponse(responseCode = "400", description = "Invalid book data"),
-      @ApiResponse(responseCode = "404", description = "Book not found")
+      @ApiResponse(responseCode = "404", description = "Book or category not found")
   })
   @PutMapping("/{id}")
   public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book updatedBook) {

@@ -6,6 +6,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -42,4 +44,10 @@ public class Book {
   @NotNull(message = "Stock is mandatory")
   @Min(value = 0, message = "Stock cannot be negative")
   private Integer stock;
+
+  @Schema(description = "Category the book belongs to")
+  @NotNull(message = "Category is mandatory")
+  @ManyToOne
+  @JoinColumn(name = "category_id", nullable = false)
+  private Category category;
 }
