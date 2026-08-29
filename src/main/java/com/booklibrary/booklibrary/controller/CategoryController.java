@@ -1,7 +1,8 @@
 package com.booklibrary.booklibrary.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,8 +35,8 @@ public class CategoryController {
 
   @Operation(summary = "Get all categories", description = "Retrieve a list of all book categories")
   @GetMapping
-  public List<Category> getAllCategories() {
-    return categoryService.getAllCategories();
+  public Page<Category> getAllCategories(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+    return categoryService.getAllCategories(pageable);
   }
 
   @Operation(summary = "Get category by ID", description = "Retrieve a category by its ID")

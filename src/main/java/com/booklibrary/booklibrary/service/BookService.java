@@ -2,6 +2,8 @@ package com.booklibrary.booklibrary.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.booklibrary.booklibrary.entity.Book;
@@ -20,8 +22,8 @@ public class BookService {
     this.categoryRepository = categoryRepository;
   }
 
-  public List<Book> getAllBooks() {
-    return bookRepository.findAll();
+  public Page<Book> getAllBooks(Pageable pageable) {
+    return bookRepository.findAll(pageable);
   }
 
   public Book getBookById(Long id) {

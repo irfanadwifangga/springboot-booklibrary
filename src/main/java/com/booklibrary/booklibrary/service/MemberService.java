@@ -2,6 +2,8 @@ package com.booklibrary.booklibrary.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.booklibrary.booklibrary.entity.Member;
@@ -15,8 +17,8 @@ public class MemberService {
     this.memberRepository = memberRepository;
   }
 
-  public List<Member> getAllMembers() {
-    return memberRepository.findAll();
+  public Page<Member> getAllMembers(Pageable pageable) {
+    return memberRepository.findAll(pageable);
   }
 
   public Member getMemberById(Long id) {

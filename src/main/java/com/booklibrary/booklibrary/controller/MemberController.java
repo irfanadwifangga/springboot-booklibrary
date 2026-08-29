@@ -2,6 +2,9 @@ package com.booklibrary.booklibrary.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,8 +38,8 @@ public class MemberController {
 
   @Operation(summary = "Get all members", description = "Retrieve a list of all members in the library")
   @GetMapping
-  public List<Member> getAllMembers() {
-    return memberService.getAllMembers();
+  public Page<Member> getAllMembers(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+    return memberService.getAllMembers(pageable);
   }
 
   @Operation(summary = "Search members by name", description = "Search members by a keyword matched against their name")

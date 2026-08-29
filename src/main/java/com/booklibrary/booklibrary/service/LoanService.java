@@ -3,6 +3,8 @@ package com.booklibrary.booklibrary.service;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.booklibrary.booklibrary.entity.Book;
@@ -27,8 +29,8 @@ public class LoanService {
     this.memberRepository = memberRepository;
   }
 
-  public List<Loan> getAllLoans() {
-    return loanRepository.findAll();
+  public Page<Loan> getAllLoans(Pageable pageable) {
+    return loanRepository.findAll(pageable);
   }
 
   public Loan getLoanById(Long id) {

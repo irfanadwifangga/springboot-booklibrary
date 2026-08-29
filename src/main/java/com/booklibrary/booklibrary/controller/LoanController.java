@@ -2,6 +2,9 @@ package com.booklibrary.booklibrary.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +37,8 @@ public class LoanController {
 
   @Operation(summary = "Get all loans", description = "Retrieve a list of all loans in the library")
   @GetMapping
-  public List<Loan> getAllLoans() {
-    return loanService.getAllLoans();
+  public Page<Loan> getAllLoans(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+    return loanService.getAllLoans(pageable);
   }
 
   @Operation(summary = "Get loan by ID", description = "Retrieve a loan by its ID")
