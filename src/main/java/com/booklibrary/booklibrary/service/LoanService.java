@@ -2,11 +2,14 @@ package com.booklibrary.booklibrary.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.booklibrary.booklibrary.dto.request.LoanRequest;
+import com.booklibrary.booklibrary.dto.response.LoanResponse;
 import com.booklibrary.booklibrary.entity.Book;
 import com.booklibrary.booklibrary.entity.Loan;
 import com.booklibrary.booklibrary.entity.LoanStatus;
@@ -29,22 +32,22 @@ public class LoanService {
     this.memberRepository = memberRepository;
   }
 
-  public Page<Loan> getAllLoans(Pageable pageable) {
-    return loanRepository.findAll(pageable);
+  public Page<LoanResponse> getAllLoans(Pageable pageable) {
+    return loanRepository.findAll(pageable).map(this::toResponse);
   }
 
-  public Loan getLoanById(Long id) {
-    return loanRepository.findById(id)
+  public LoanResponse getLoanById(Long id) {
+    return loanRepository.findById(id).map(this::toResponse)
         .orElseThrow(() -> new RuntimeException("Loan not found with id " + id));
   }
 
   @Transactional
-  public Loan createLoan(Loan loanRequest) {
-    Book book = bookRepository.findById(loanRequest.getBook().getId())
-        .orElseThrow(() -> new RuntimeException("Book not found with id " + loanRequest.getBook().getId()));
+  public LoanResponse createLoan(LoanRequest request) {
+    Book book = bookRepository.findById(request.getBookId())
+        .orElseThrow(() -> new RuntimeException("Book not found with id " + request.getBookId()));
 
-    Member member = memberRepository.findById(loanRequest.getMember().getId())
-        .orElseThrow(() -> new RuntimeException("Member not found with id " + loanRequest.getMember().getId()));
+    Member member = memberRepository.findById(request.getMemberId())
+        .orElseThrow(() -> new RuntimeException("Member not found with id " + request.getMemberId()));
 
     if (book.getStock() <= 0) {
       throw new RuntimeException("Book is out of stock");
@@ -60,12 +63,12 @@ public class LoanService {
     loan.setDueDate(LocalDate.now().plusDays(14)); // Assuming a 2-week borrowing period
     loan.setStatus(LoanStatus.BORROWED);
 
-    return loanRepository.save(loan);
+    return toResponse(loanRepository.save(loan));
   }
 
   @Transactional
-  public Loan returnLoan(Long id) {
-    Loan loan = getLoanById(id);
+  public LoanResponse returnLoan(Long id) {
+    Loan loan = findLoanEntity(id);
 
     if (loan.getStatus() == LoanStatus.RETURNED) {
       throw new RuntimeException("Loan with ID " + id + " has already been returned");
@@ -74,23 +77,41 @@ public class LoanService {
     loan.setReturnDate(LocalDate.now());
     loan.setStatus(LoanStatus.RETURNED);
 
-    Book book = loan.getBook();
+    Book book = bookRepository.findById(loan.getBook().getId())
+        .orElseThrow(() -> new RuntimeException("Book not found with id " + loan.getBook().getId()));
     book.setStock(book.getStock() + 1);
     bookRepository.save(book);
 
-    return loanRepository.save(loan);
+    return toResponse(loanRepository.save(loan));
   }
 
-  public List<Loan> getLoansByStatus(LoanStatus status) {
-    return loanRepository.findByStatus(status);
+  public List<LoanResponse> getLoansByStatus(LoanStatus status) {
+    return loanRepository.findByStatus(status).stream().map(this::toResponse).collect(Collectors.toList());
   }
 
-  public List<Loan> getLoansByMemberId(Long memberId) {
-    return loanRepository.findByMemberId(memberId);
+  public List<LoanResponse> getLoansByMemberId(Long memberId) {
+    return loanRepository.findByMemberId(memberId).stream().map(this::toResponse).collect(Collectors.toList());
   }
 
-  public List<Loan> getOverdueLoans() {
+  public List<LoanResponse> getOverdueLoans() {
     LocalDate currentDate = LocalDate.now();
-    return loanRepository.findOverdueLoans(currentDate);
+    return loanRepository.findOverdueLoans(currentDate).stream().map(this::toResponse).collect(Collectors.toList());
+  }
+
+  private LoanResponse toResponse(Loan loan) {
+    LoanResponse response = new LoanResponse();
+    response.setId(loan.getId());
+    response.setBookId(loan.getBook().getId());
+    response.setMemberId(loan.getMember().getId());
+    response.setLoanDate(loan.getBorrowDate());
+    response.setDueDate(loan.getDueDate());
+    response.setReturnDate(loan.getReturnDate());
+    response.setStatus(loan.getStatus());
+    return response;
+  }
+
+  private Loan findLoanEntity(Long id) {
+    return loanRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Loan not found with id " + id));
   }
 }

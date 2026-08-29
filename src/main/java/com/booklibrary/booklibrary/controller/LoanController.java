@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.booklibrary.booklibrary.entity.Loan;
+import com.booklibrary.booklibrary.dto.request.LoanRequest;
+import com.booklibrary.booklibrary.dto.response.LoanResponse;
 import com.booklibrary.booklibrary.entity.LoanStatus;
 import com.booklibrary.booklibrary.service.LoanService;
 
@@ -37,7 +38,7 @@ public class LoanController {
 
   @Operation(summary = "Get all loans", description = "Retrieve a list of all loans in the library")
   @GetMapping
-  public Page<Loan> getAllLoans(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+  public Page<LoanResponse> getAllLoans(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
     return loanService.getAllLoans(pageable);
   }
 
@@ -47,7 +48,7 @@ public class LoanController {
       @ApiResponse(responseCode = "404", description = "Loan not found")
   })
   @GetMapping("/{id}")
-  public ResponseEntity<Loan> getLoanById(@PathVariable Long id) {
+  public ResponseEntity<LoanResponse> getLoanById(@PathVariable Long id) {
     return ResponseEntity.ok(loanService.getLoanById(id));
   }
 
@@ -58,8 +59,8 @@ public class LoanController {
       @ApiResponse(responseCode = "404", description = "Book or member not found")
   })
   @PostMapping
-  public ResponseEntity<Loan> createLoan(@Valid @RequestBody Loan loan) {
-    Loan savedLoan = loanService.createLoan(loan);
+  public ResponseEntity<LoanResponse> createLoan(@Valid @RequestBody LoanRequest request) {
+    LoanResponse savedLoan = loanService.createLoan(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedLoan);
   }
 
@@ -70,7 +71,7 @@ public class LoanController {
       @ApiResponse(responseCode = "400", description = "Loan has already been returned")
   })
   @PutMapping("/{id}/return")
-  public ResponseEntity<Loan> returnLoan(@PathVariable Long id) {
+  public ResponseEntity<LoanResponse> returnLoan(@PathVariable Long id) {
     return ResponseEntity.ok(loanService.returnLoan(id));
   }
 
@@ -79,7 +80,7 @@ public class LoanController {
       @ApiResponse(responseCode = "200", description = "Loans found"),
   })
   @GetMapping("/status/{status}")
-  public List<Loan> getLoansByStatus(@PathVariable LoanStatus status) {
+  public List<LoanResponse> getLoansByStatus(@PathVariable LoanStatus status) {
     return loanService.getLoansByStatus(status);
   }
 
@@ -88,7 +89,7 @@ public class LoanController {
       @ApiResponse(responseCode = "200", description = "Loans found"),
   })
   @GetMapping("/member/{memberId}")
-  public List<Loan> getLoansByMemberId(@PathVariable Long memberId) {
+  public List<LoanResponse> getLoansByMemberId(@PathVariable Long memberId) {
     return loanService.getLoansByMemberId(memberId);
   }
 
@@ -97,7 +98,7 @@ public class LoanController {
       @ApiResponse(responseCode = "200", description = "Overdue loans found"),
   })
   @GetMapping("/overdue")
-  public List<Loan> getOverdueLoans() {
+  public List<LoanResponse> getOverdueLoans() {
     return loanService.getOverdueLoans();
   }
 }

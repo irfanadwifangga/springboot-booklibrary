@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.booklibrary.booklibrary.entity.Member;
+import com.booklibrary.booklibrary.dto.request.MemberRequest;
+import com.booklibrary.booklibrary.dto.response.MemberResponse;
 import com.booklibrary.booklibrary.service.MemberService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,7 +39,7 @@ public class MemberController {
 
   @Operation(summary = "Get all members", description = "Retrieve a list of all members in the library")
   @GetMapping
-  public Page<Member> getAllMembers(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+  public Page<MemberResponse> getAllMembers(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
     return memberService.getAllMembers(pageable);
   }
 
@@ -47,7 +48,7 @@ public class MemberController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Successfully retrieved the members"),
   })
-  public List<Member> searchMembersByName(@RequestParam String name) {
+  public List<MemberResponse> searchMembersByName(@RequestParam String name) {
     return memberService.searchMembersByName(name);
   }
 
@@ -57,7 +58,7 @@ public class MemberController {
       @ApiResponse(responseCode = "200", description = "Successfully retrieved the member"),
       @ApiResponse(responseCode = "404", description = "Member not found")
   })
-  public ResponseEntity<Member> getMemberById(@PathVariable Long id) {
+  public ResponseEntity<MemberResponse> getMemberById(@PathVariable Long id) {
     return ResponseEntity.ok(memberService.getMemberById(id));
   }
 
@@ -67,8 +68,8 @@ public class MemberController {
       @ApiResponse(responseCode = "400", description = "Invalid member data")
   })
   @PostMapping
-  public ResponseEntity<Member> createMember(@Valid @RequestBody Member member) {
-    Member savedMember = memberService.createMember(member);
+  public ResponseEntity<MemberResponse> createMember(@Valid @RequestBody MemberRequest request) {
+    MemberResponse savedMember = memberService.createMember(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedMember);
   }
 
@@ -79,8 +80,8 @@ public class MemberController {
       @ApiResponse(responseCode = "400", description = "Invalid member data")
   })
   @PutMapping("/{id}")
-  public ResponseEntity<Member> updateMember(@PathVariable Long id, @Valid @RequestBody Member updatedMember) {
-    return ResponseEntity.ok(memberService.updateMember(id, updatedMember));
+  public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id, @Valid @RequestBody MemberRequest request) {
+    return ResponseEntity.ok(memberService.updateMember(id, request));
   }
 
   @Operation(summary = "Delete a member", description = "Remove a member from the library by its ID")

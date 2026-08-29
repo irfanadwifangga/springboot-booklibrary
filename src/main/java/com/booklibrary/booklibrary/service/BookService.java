@@ -1,11 +1,14 @@
 package com.booklibrary.booklibrary.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.booklibrary.booklibrary.dto.request.BookRequest;
+import com.booklibrary.booklibrary.dto.response.BookResponse;
 import com.booklibrary.booklibrary.entity.Book;
 import com.booklibrary.booklibrary.entity.Category;
 import com.booklibrary.booklibrary.repository.BookRepository;
@@ -22,51 +25,72 @@ public class BookService {
     this.categoryRepository = categoryRepository;
   }
 
-  public Page<Book> getAllBooks(Pageable pageable) {
-    return bookRepository.findAll(pageable);
+  public Page<BookResponse> getAllBooks(Pageable pageable) {
+    return bookRepository.findAll(pageable).map(this::toResponse);
   }
 
-  public Book getBookById(Long id) {
+  public BookResponse getBookById(Long id) {
     return bookRepository.findById(id)
+        .map(this::toResponse)
         .orElseThrow(() -> new RuntimeException("Book not found with id " + id));
   }
 
-  public Book createBook(Book book) {
-    book.setCategory(resolveCategory(book.getCategory()));
-    return bookRepository.save(book);
+  public BookResponse createBook(BookRequest request) {
+    Book book = new Book();
+    book.setTitle(request.getTitle());
+    book.setAuthor(request.getAuthor());
+    book.setIsbn(request.getIsbn());
+    book.setStock(request.getStock());
+    Category category = resolveCategory(request.getCategoryId());
+    book.setCategory(category);
+    return toResponse(bookRepository.save(book));
   }
 
-  public Book updateBook(Long id, Book updatedBook) {
-    Book existingBook = getBookById(id);
-    existingBook.setTitle(updatedBook.getTitle());
-    existingBook.setAuthor(updatedBook.getAuthor());
-    existingBook.setIsbn(updatedBook.getIsbn());
-    existingBook.setStock(updatedBook.getStock());
-    existingBook.setCategory(resolveCategory(updatedBook.getCategory()));
-    return bookRepository.save(existingBook);
+  public BookResponse updateBook(Long id, BookRequest request) {
+    Book existingBook = bookRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Book not found with id " + id));
+    Category category = resolveCategory(request.getCategoryId());
+    existingBook.setCategory(category);
+    existingBook.setTitle(request.getTitle());
+    existingBook.setAuthor(request.getAuthor());
+    existingBook.setIsbn(request.getIsbn());
+    existingBook.setStock(request.getStock());
+
+    return toResponse(bookRepository.save(existingBook));
   }
 
   public void deleteBook(Long id) {
     bookRepository.deleteById(id);
   }
 
-  public List<Book> searchBooks(String keyword) {
-    return bookRepository.searchByTitleOrAuthor(keyword);
+  public List<BookResponse> searchBooks(String keyword) {
+    return bookRepository.searchByTitleOrAuthor(keyword).stream().map(this::toResponse).collect(Collectors.toList());
   }
 
-  public List<Book> getBooksByCategory(Long categoryId) {
-    return bookRepository.findByCategoryId(categoryId);
+  public List<BookResponse> getBooksByCategory(Long categoryId) {
+    return bookRepository.findByCategoryId(categoryId).stream().map(this::toResponse).collect(Collectors.toList());
   }
 
-  public List<Book> getLowStockBooks(Integer threshold) {
-    return bookRepository.findByStockLessThan(threshold);
+  public List<BookResponse> getLowStockBooks(Integer threshold) {
+    return bookRepository.findByStockLessThan(threshold).stream().map(this::toResponse).collect(Collectors.toList());
   }
 
-  private Category resolveCategory(Category category) {
-    if (category == null || category.getId() == null) {
+  private Category resolveCategory(Long categoryId) {
+    if (categoryId == null) {
       throw new RuntimeException("Category is mandatory");
     }
-    return categoryRepository.findById(category.getId())
-        .orElseThrow(() -> new RuntimeException("Category not found with id " + category.getId()));
+    return categoryRepository.findById(categoryId)
+        .orElseThrow(() -> new RuntimeException("Category not found with id " + categoryId));
+  }
+
+  private BookResponse toResponse(Book book) {
+    BookResponse response = new BookResponse();
+    response.setId(book.getId());
+    response.setTitle(book.getTitle());
+    response.setAuthor(book.getAuthor());
+    response.setIsbn(book.getIsbn());
+    response.setStock(book.getStock());
+    response.setCategoryId(book.getCategory().getId());
+    return response;
   }
 }

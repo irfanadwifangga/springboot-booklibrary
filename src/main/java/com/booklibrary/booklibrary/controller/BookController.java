@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.booklibrary.booklibrary.entity.Book;
+import com.booklibrary.booklibrary.dto.request.BookRequest;
+import com.booklibrary.booklibrary.dto.response.BookResponse;
 import com.booklibrary.booklibrary.service.BookService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,13 +40,13 @@ public class BookController {
 
   @Operation(summary = "Get all books", description = "Retrieve a list of all books in the library")
   @GetMapping
-  public Page<Book> getAllBooks(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+  public Page<BookResponse> getAllBooks(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
     return bookService.getAllBooks(pageable);
   }
 
   @Operation(summary = "Search books", description = "Search books by a keyword matched against title or author")
   @GetMapping("/search")
-  public List<Book> searchBooks(
+  public List<BookResponse> searchBooks(
       @Parameter(description = "Keyword to match against title or author", example = "gatsby") @RequestParam String keyword) {
     return bookService.searchBooks(keyword);
   }
@@ -55,13 +56,13 @@ public class BookController {
       @ApiResponse(responseCode = "200", description = "Successfully retrieved the books")
   })
   @GetMapping("/category/{categoryId}")
-  public List<Book> getBooksByCategory(@PathVariable Long categoryId) {
+  public List<BookResponse> getBooksByCategory(@PathVariable Long categoryId) {
     return bookService.getBooksByCategory(categoryId);
   }
 
   @Operation(summary = "Get low stock books", description = "Retrieve books whose stock is below the given threshold")
   @GetMapping("/low-stock")
-  public List<Book> getLowStockBooks(
+  public List<BookResponse> getLowStockBooks(
       @Parameter(description = "Stock threshold", example = "5") @RequestParam(defaultValue = "5") Integer threshold) {
     return bookService.getLowStockBooks(threshold);
   }
@@ -72,7 +73,7 @@ public class BookController {
       @ApiResponse(responseCode = "404", description = "Book not found")
   })
   @GetMapping("/{id}")
-  public ResponseEntity<Book> getBookById(@PathVariable Long id) {
+  public ResponseEntity<BookResponse> getBookById(@PathVariable Long id) {
     return ResponseEntity.ok(bookService.getBookById(id));
   }
 
@@ -83,8 +84,8 @@ public class BookController {
       @ApiResponse(responseCode = "404", description = "Category not found")
   })
   @PostMapping
-  public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
-    Book savedBook = bookService.createBook(book);
+  public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookRequest request) {
+    BookResponse savedBook = bookService.createBook(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedBook);
   }
 
@@ -95,8 +96,8 @@ public class BookController {
       @ApiResponse(responseCode = "404", description = "Book or category not found")
   })
   @PutMapping("/{id}")
-  public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book updatedBook) {
-    return ResponseEntity.ok(bookService.updateBook(id, updatedBook));
+  public ResponseEntity<BookResponse> updateBook(@PathVariable Long id, @Valid @RequestBody BookRequest request) {
+    return ResponseEntity.ok(bookService.updateBook(id, request));
   }
 
   @Operation(summary = "Delete a book", description = "Remove a book from the library by its ID")

@@ -4,6 +4,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.booklibrary.booklibrary.dto.request.CategoryRequest;
+import com.booklibrary.booklibrary.dto.response.CategoryResponse;
 import com.booklibrary.booklibrary.entity.Category;
 import com.booklibrary.booklibrary.repository.CategoryRepository;
 
@@ -16,27 +18,40 @@ public class CategoryService {
     this.categoryRepository = categoryRepository;
   }
 
-  public Page<Category> getAllCategories(Pageable pageable) {
-    return categoryRepository.findAll(pageable);
+  public Page<CategoryResponse> getAllCategories(Pageable pageable) {
+    return categoryRepository.findAll(pageable).map(this::toResponse);
   }
 
-  public Category getCategoryById(Long id) {
+  public CategoryResponse getCategoryById(Long id) {
     return categoryRepository.findById(id)
+        .map(this::toResponse)
         .orElseThrow(() -> new RuntimeException("Category not found with id " + id));
   }
 
-  public Category createCategory(Category category) {
-    return categoryRepository.save(category);
+  public CategoryResponse createCategory(CategoryRequest request) {
+    Category category = new Category();
+    category.setName(request.getName());
+    category.setDescription(request.getDescription());
+    return toResponse(categoryRepository.save(category));
   }
 
-  public Category updateCategory(Long id, Category updatedCategory) {
-    Category existingCategory = getCategoryById(id);
-    existingCategory.setName(updatedCategory.getName());
-    existingCategory.setDescription(updatedCategory.getDescription());
-    return categoryRepository.save(existingCategory);
+  public CategoryResponse updateCategory(Long id, CategoryRequest request) {
+    Category existingCategory = categoryRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+    existingCategory.setName(request.getName());
+    existingCategory.setDescription(request.getDescription());
+    return toResponse(categoryRepository.save(existingCategory));
   }
 
   public void deleteCategory(Long id) {
     categoryRepository.deleteById(id);
+  }
+
+  private CategoryResponse toResponse(Category category) {
+    CategoryResponse response = new CategoryResponse();
+    response.setId(category.getId());
+    response.setName(category.getName());
+    response.setDescription(category.getDescription());
+    return response;
   }
 }

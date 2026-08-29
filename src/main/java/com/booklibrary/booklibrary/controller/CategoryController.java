@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.booklibrary.booklibrary.entity.Category;
+import com.booklibrary.booklibrary.dto.request.CategoryRequest;
+import com.booklibrary.booklibrary.dto.response.CategoryResponse;
 import com.booklibrary.booklibrary.service.CategoryService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +36,7 @@ public class CategoryController {
 
   @Operation(summary = "Get all categories", description = "Retrieve a list of all book categories")
   @GetMapping
-  public Page<Category> getAllCategories(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
+  public Page<CategoryResponse> getAllCategories(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
     return categoryService.getAllCategories(pageable);
   }
 
@@ -45,7 +46,7 @@ public class CategoryController {
       @ApiResponse(responseCode = "404", description = "Category not found")
   })
   @GetMapping("/{id}")
-  public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
+  public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id) {
     return ResponseEntity.ok(categoryService.getCategoryById(id));
   }
 
@@ -55,8 +56,8 @@ public class CategoryController {
       @ApiResponse(responseCode = "400", description = "Invalid category data")
   })
   @PostMapping
-  public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
-    Category savedCategory = categoryService.createCategory(category);
+  public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
+    CategoryResponse savedCategory = categoryService.createCategory(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedCategory);
   }
 
@@ -67,8 +68,9 @@ public class CategoryController {
       @ApiResponse(responseCode = "404", description = "Category not found")
   })
   @PutMapping("/{id}")
-  public ResponseEntity<Category> updateCategory(@PathVariable Long id, @Valid @RequestBody Category updatedCategory) {
-    return ResponseEntity.ok(categoryService.updateCategory(id, updatedCategory));
+  public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id,
+      @Valid @RequestBody CategoryRequest request) {
+    return ResponseEntity.ok(categoryService.updateCategory(id, request));
   }
 
   @Operation(summary = "Delete a category", description = "Remove a book category by its ID")

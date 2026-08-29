@@ -3,7 +3,6 @@ package com.booklibrary.booklibrary.entity;
 import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,11 +35,11 @@ public class Loan {
   private Member member;
 
   @Schema(description = "Date borrowed", example = "2023-01-01")
-  @Column(nullable = false)
+  @NotNull(message = "Borrow date is mandatory")
   private LocalDate borrowDate;
 
   @Schema(description = "Due date for returning the book", example = "2023-01-15")
-  @Column(nullable = false)
+  @NotNull(message = "Due date is mandatory")
   private LocalDate dueDate;
 
   @Schema(description = "Date returned", example = "2023-01-15")
@@ -48,6 +47,6 @@ public class Loan {
 
   @Schema(description = "Status of the loan", example = "BORROWED")
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @NotNull(message = "Status is mandatory")
   private LoanStatus status;
 }
