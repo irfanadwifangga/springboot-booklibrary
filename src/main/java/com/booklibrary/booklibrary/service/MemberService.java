@@ -38,4 +38,8 @@ public class MemberService {
   public void deleteMember(Long id) {
     memberRepository.deleteById(id);
   }
+
+  public List<Member> searchMembersByName(String name) {
+    return memberRepository.findByNameContainingIgnoreCase(name);
+  }
 }

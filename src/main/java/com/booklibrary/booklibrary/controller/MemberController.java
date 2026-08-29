@@ -9,9 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.booklibrary.booklibrary.entity.Member;
 import com.booklibrary.booklibrary.service.MemberService;
@@ -36,6 +37,15 @@ public class MemberController {
   @GetMapping
   public List<Member> getAllMembers() {
     return memberService.getAllMembers();
+  }
+
+  @Operation(summary = "Search members by name", description = "Search members by a keyword matched against their name")
+  @GetMapping("/search")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the members"),
+  })
+  public List<Member> searchMembersByName(@RequestParam String name) {
+    return memberService.searchMembersByName(name);
   }
 
   @Operation(summary = "Get member by ID", description = "Retrieve a member by its ID")

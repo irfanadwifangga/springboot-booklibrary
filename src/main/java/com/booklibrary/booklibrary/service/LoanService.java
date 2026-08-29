@@ -1,17 +1,15 @@
 package com.booklibrary.booklibrary.service;
 
 import java.time.LocalDate;
-
-import com.booklibrary.booklibrary.repository.BookRepository;
-
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.booklibrary.booklibrary.entity.Book;
-import com.booklibrary.booklibrary.entity.Member;
 import com.booklibrary.booklibrary.entity.Loan;
 import com.booklibrary.booklibrary.entity.LoanStatus;
+import com.booklibrary.booklibrary.entity.Member;
+import com.booklibrary.booklibrary.repository.BookRepository;
 import com.booklibrary.booklibrary.repository.LoanRepository;
 import com.booklibrary.booklibrary.repository.MemberRepository;
 
@@ -57,6 +55,7 @@ public class LoanService {
     loan.setBook(book);
     loan.setMember(member);
     loan.setBorrowDate(LocalDate.now());
+    loan.setDueDate(LocalDate.now().plusDays(14)); // Assuming a 2-week borrowing period
     loan.setStatus(LoanStatus.BORROWED);
 
     return loanRepository.save(loan);
@@ -78,5 +77,18 @@ public class LoanService {
     bookRepository.save(book);
 
     return loanRepository.save(loan);
+  }
+
+  public List<Loan> getLoansByStatus(LoanStatus status) {
+    return loanRepository.findByStatus(status);
+  }
+
+  public List<Loan> getLoansByMemberId(Long memberId) {
+    return loanRepository.findByMemberId(memberId);
+  }
+
+  public List<Loan> getOverdueLoans() {
+    LocalDate currentDate = LocalDate.now();
+    return loanRepository.findOverdueLoans(currentDate);
   }
 }

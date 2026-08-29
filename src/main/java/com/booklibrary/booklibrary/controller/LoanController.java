@@ -8,11 +8,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import com.booklibrary.booklibrary.entity.Loan;
+import com.booklibrary.booklibrary.entity.LoanStatus;
 import com.booklibrary.booklibrary.service.LoanService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,5 +69,32 @@ public class LoanController {
   @PutMapping("/{id}/return")
   public ResponseEntity<Loan> returnLoan(@PathVariable Long id) {
     return ResponseEntity.ok(loanService.returnLoan(id));
+  }
+
+  @Operation(summary = "Get loans by status", description = "Retrieve all loans with a specific status (BORROWED or RETURNED)")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Loans found"),
+  })
+  @GetMapping("/status/{status}")
+  public List<Loan> getLoansByStatus(@PathVariable LoanStatus status) {
+    return loanService.getLoansByStatus(status);
+  }
+
+  @Operation(summary = "Get loans by member ID", description = "Retrieve all loans associated with a specific member")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Loans found"),
+  })
+  @GetMapping("/member/{memberId}")
+  public List<Loan> getLoansByMemberId(@PathVariable Long memberId) {
+    return loanService.getLoansByMemberId(memberId);
+  }
+
+  @Operation(summary = "Get overdue loans", description = "Retrieve all loans that are overdue")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Overdue loans found"),
+  })
+  @GetMapping("/overdue")
+  public List<Loan> getOverdueLoans() {
+    return loanService.getOverdueLoans();
   }
 }

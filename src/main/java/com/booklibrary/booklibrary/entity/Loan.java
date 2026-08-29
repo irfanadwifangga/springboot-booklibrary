@@ -39,6 +39,10 @@ public class Loan {
   @Column(nullable = false)
   private LocalDate borrowDate;
 
+  @Schema(description = "Due date for returning the book", example = "2023-01-15")
+  @Column(nullable = false)
+  private LocalDate dueDate;
+
   @Schema(description = "Date returned", example = "2023-01-15")
   private LocalDate returnDate;
 
