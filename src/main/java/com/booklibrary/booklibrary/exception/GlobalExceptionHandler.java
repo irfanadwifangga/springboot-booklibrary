@@ -30,16 +30,6 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(response);
   }
 
-  @ExceptionHandler(RuntimeException.class)
-  public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
-    ErrorResponse response = new ErrorResponse(
-        LocalDateTime.now(),
-        HttpStatus.NOT_FOUND.value(),
-        ex.getMessage(),
-        null);
-    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-  }
-
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
     ErrorResponse response = new ErrorResponse(
@@ -49,5 +39,25 @@ public class GlobalExceptionHandler {
         null);
 
     return ResponseEntity.internalServerError().body(response);
+  }
+
+  @ExceptionHandler(BadRequestException.class)
+  public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
+    ErrorResponse response = new ErrorResponse(
+        LocalDateTime.now(),
+        HttpStatus.BAD_REQUEST.value(),
+        ex.getMessage(),
+        null);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+  }
+
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
+    ErrorResponse response = new ErrorResponse(
+        LocalDateTime.now(),
+        HttpStatus.NOT_FOUND.value(),
+        ex.getMessage(),
+        null);
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
   }
 }

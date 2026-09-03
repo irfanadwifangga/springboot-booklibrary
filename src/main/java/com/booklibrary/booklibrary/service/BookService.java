@@ -11,6 +11,8 @@ import com.booklibrary.booklibrary.dto.request.BookRequest;
 import com.booklibrary.booklibrary.dto.response.BookResponse;
 import com.booklibrary.booklibrary.entity.Book;
 import com.booklibrary.booklibrary.entity.Category;
+import com.booklibrary.booklibrary.exception.BadRequestException;
+import com.booklibrary.booklibrary.exception.ResourceNotFoundException;
 import com.booklibrary.booklibrary.repository.BookRepository;
 import com.booklibrary.booklibrary.repository.CategoryRepository;
 
@@ -32,7 +34,7 @@ public class BookService {
   public BookResponse getBookById(Long id) {
     return bookRepository.findById(id)
         .map(this::toResponse)
-        .orElseThrow(() -> new RuntimeException("Book not found with id " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + id));
   }
 
   public BookResponse createBook(BookRequest request) {
@@ -48,7 +50,7 @@ public class BookService {
 
   public BookResponse updateBook(Long id, BookRequest request) {
     Book existingBook = bookRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Book not found with id " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + id));
     Category category = resolveCategory(request.getCategoryId());
     existingBook.setCategory(category);
     existingBook.setTitle(request.getTitle());
@@ -77,10 +79,10 @@ public class BookService {
 
   private Category resolveCategory(Long categoryId) {
     if (categoryId == null) {
-      throw new RuntimeException("Category is mandatory");
+      throw new BadRequestException("Category is mandatory");
     }
     return categoryRepository.findById(categoryId)
-        .orElseThrow(() -> new RuntimeException("Category not found with id " + categoryId));
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found with id " + categoryId));
   }
 
   private BookResponse toResponse(Book book) {

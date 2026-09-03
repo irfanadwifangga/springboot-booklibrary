@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.booklibrary.booklibrary.dto.request.MemberRequest;
 import com.booklibrary.booklibrary.dto.response.MemberResponse;
 import com.booklibrary.booklibrary.entity.Member;
+import com.booklibrary.booklibrary.exception.ResourceNotFoundException;
 import com.booklibrary.booklibrary.repository.MemberRepository;
 
 @Service
@@ -27,7 +28,7 @@ public class MemberService {
   public MemberResponse getMemberById(Long id) {
     return memberRepository.findById(id)
         .map(this::toResponse)
-        .orElseThrow(() -> new RuntimeException("Member not found with id " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Member not found with id " + id));
   }
 
   public MemberResponse createMember(MemberRequest request) {
@@ -40,7 +41,7 @@ public class MemberService {
 
   public MemberResponse updateMember(Long id, MemberRequest updatedMember) {
     Member existingMember = memberRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Member not found with id " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Member not found with id " + id));
     existingMember.setName(updatedMember.getName());
     existingMember.setEmail(updatedMember.getEmail());
     existingMember.setPhoneNumber(updatedMember.getPhoneNumber());

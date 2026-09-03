@@ -14,6 +14,8 @@ import com.booklibrary.booklibrary.entity.Book;
 import com.booklibrary.booklibrary.entity.Loan;
 import com.booklibrary.booklibrary.entity.LoanStatus;
 import com.booklibrary.booklibrary.entity.Member;
+import com.booklibrary.booklibrary.exception.BadRequestException;
+import com.booklibrary.booklibrary.exception.ResourceNotFoundException;
 import com.booklibrary.booklibrary.repository.BookRepository;
 import com.booklibrary.booklibrary.repository.LoanRepository;
 import com.booklibrary.booklibrary.repository.MemberRepository;
@@ -38,19 +40,19 @@ public class LoanService {
 
   public LoanResponse getLoanById(Long id) {
     return loanRepository.findById(id).map(this::toResponse)
-        .orElseThrow(() -> new RuntimeException("Loan not found with id " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Loan not found with id " + id));
   }
 
   @Transactional
   public LoanResponse createLoan(LoanRequest request) {
     Book book = bookRepository.findById(request.getBookId())
-        .orElseThrow(() -> new RuntimeException("Book not found with id " + request.getBookId()));
+        .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + request.getBookId()));
 
     Member member = memberRepository.findById(request.getMemberId())
-        .orElseThrow(() -> new RuntimeException("Member not found with id " + request.getMemberId()));
+        .orElseThrow(() -> new ResourceNotFoundException("Member not found with id " + request.getMemberId()));
 
     if (book.getStock() <= 0) {
-      throw new RuntimeException("Book is out of stock");
+      throw new BadRequestException("Book is out of stock");
     }
 
     book.setStock(book.getStock() - 1);
@@ -71,14 +73,14 @@ public class LoanService {
     Loan loan = findLoanEntity(id);
 
     if (loan.getStatus() == LoanStatus.RETURNED) {
-      throw new RuntimeException("Loan with ID " + id + " has already been returned");
+      throw new BadRequestException("Loan with ID " + id + " has already been returned");
     }
 
     loan.setReturnDate(LocalDate.now());
     loan.setStatus(LoanStatus.RETURNED);
 
     Book book = bookRepository.findById(loan.getBook().getId())
-        .orElseThrow(() -> new RuntimeException("Book not found with id " + loan.getBook().getId()));
+        .orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + loan.getBook().getId()));
     book.setStock(book.getStock() + 1);
     bookRepository.save(book);
 
@@ -112,6 +114,6 @@ public class LoanService {
 
   private Loan findLoanEntity(Long id) {
     return loanRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Loan not found with id " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Loan not found with id " + id));
   }
 }
