@@ -40,7 +40,8 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**").permitAll()
+            // logout is intentionally NOT here - it needs a valid access token
+            .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
             .requestMatchers("/docs/**", "/v3/api-docs/**").permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.booklibrary.booklibrary.dto.request.LoginRequest;
+import com.booklibrary.booklibrary.dto.request.RefreshTokenRequest;
 import com.booklibrary.booklibrary.dto.request.RegisterRequest;
 import com.booklibrary.booklibrary.dto.response.AuthResponse;
+import com.booklibrary.booklibrary.entity.RefreshToken;
 import com.booklibrary.booklibrary.entity.User;
 import com.booklibrary.booklibrary.exception.BadRequestException;
 import com.booklibrary.booklibrary.repository.UserRepository;
@@ -42,6 +45,9 @@ class AuthServiceTest {
 
   @Mock
   private JwtUtil jwtUtil;
+
+  @Mock
+  private RefreshTokenService refreshTokenService;
 
   @InjectMocks
   private AuthService authService;
@@ -77,19 +83,28 @@ class AuthServiceTest {
   }
 
   @Test
-  void login_whenCredentialsValid_returnsToken() {
+  void login_whenCredentialsValid_returnsAccessAndRefreshToken() {
     LoginRequest request = new LoginRequest();
     request.setUsername("john");
     request.setPassword("plainPass123");
 
+    User user = new User();
+    user.setId(1L);
+    user.setUsername("john");
+
+    RefreshToken refreshToken = new RefreshToken();
+    refreshToken.setToken("mocked-refresh-token");
+
     // authenticationManager.authenticate() left unstubbed -> default mock
-    // returns null without throwing, simulating a successful login (the
-    // return value isn't used, only the absence of an exception matters).
+    // returns null without throwing, simulating a successful login.
+    when(userRepository.findByUsername("john")).thenReturn(Optional.of(user));
     when(jwtUtil.generateToken("john")).thenReturn("mocked-jwt-token");
+    when(refreshTokenService.createRefreshToken(user)).thenReturn(refreshToken);
 
     AuthResponse response = authService.login(request);
 
     assertEquals("mocked-jwt-token", response.getToken());
+    assertEquals("mocked-refresh-token", response.getRefreshToken());
   }
 
   @Test
@@ -103,5 +118,52 @@ class AuthServiceTest {
 
     assertThrows(BadRequestException.class, () -> authService.login(request));
     verify(jwtUtil, never()).generateToken(any(String.class));
+    verify(refreshTokenService, never()).createRefreshToken(any(User.class));
+  }
+
+  @Test
+  void refreshToken_whenTokenValid_returnsNewAccessTokenWithSameRefreshToken() {
+    User user = new User();
+    user.setUsername("john");
+
+    RefreshToken refreshToken = new RefreshToken();
+    refreshToken.setUser(user);
+    refreshToken.setToken("valid-refresh-token");
+    refreshToken.setExpiryDate(Instant.now().plusSeconds(3600));
+
+    RefreshTokenRequest request = new RefreshTokenRequest();
+    request.setRefreshToken("valid-refresh-token");
+
+    when(refreshTokenService.findByToken("valid-refresh-token")).thenReturn(Optional.of(refreshToken));
+    when(refreshTokenService.verifyExpiration(refreshToken)).thenReturn(refreshToken);
+    when(jwtUtil.generateToken("john")).thenReturn("new-access-token");
+
+    AuthResponse response = authService.refreshToken(request);
+
+    assertEquals("new-access-token", response.getToken());
+    assertEquals("valid-refresh-token", response.getRefreshToken());
+  }
+
+  @Test
+  void refreshToken_whenTokenNotFound_throwsBadRequestException() {
+    RefreshTokenRequest request = new RefreshTokenRequest();
+    request.setRefreshToken("unknown-token");
+
+    when(refreshTokenService.findByToken("unknown-token")).thenReturn(Optional.empty());
+
+    assertThrows(BadRequestException.class, () -> authService.refreshToken(request));
+    verify(jwtUtil, never()).generateToken(any(String.class));
+  }
+
+  @Test
+  void logout_deletesRefreshTokenForUser() {
+    User user = new User();
+    user.setUsername("john");
+
+    when(userRepository.findByUsername("john")).thenReturn(Optional.of(user));
+
+    authService.logout("john");
+
+    verify(refreshTokenService).deleteByUser(user);
   }
 }

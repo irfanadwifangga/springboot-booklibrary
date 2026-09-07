@@ -8,7 +8,12 @@
     {
       "name": "jwt.expiration-ms",
       "type": "java.lang.Long",
-      "description": "JWT token validity duration, in milliseconds."
+      "description": "Access token validity duration, in milliseconds."
+    },
+    {
+      "name": "jwt.refresh-expiration-ms",
+      "type": "java.lang.Long",
+      "description": "Refresh token validity duration, in milliseconds."
     }
   ]
 }

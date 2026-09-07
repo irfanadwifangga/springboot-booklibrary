@@ -24,6 +24,10 @@
       "value": ""
     },
     {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
       "key": "categoryId",
       "value": ""
     },
@@ -43,7 +47,7 @@
   "item": [
     {
       "name": "Auth",
-      "description": "Register/login are public. Login saves the JWT into the {{token}} collection variable, used automatically (Bearer auth) by every other request below.",
+      "description": "Register/login/refresh are public. Login saves the access token into {{token}} (used automatically as Bearer auth below) and the refresh token into {{refreshToken}}.",
       "item": [
         {
           "name": "Register",
@@ -115,7 +119,7 @@
                 "login"
               ]
             },
-            "description": "Authenticate and get back a JWT. Auto-saves the token for every other request in this collection.",
+            "description": "Authenticate and get back an access token + refresh token. Auto-saves both for the rest of this collection.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"john\",\n  \"password\": \"rahasia123\"\n}",
@@ -140,10 +144,14 @@
                   "});",
                   "",
                   "const jsonData = pm.response.json();",
-                  "pm.test('Token is present', function () {",
+                  "pm.test('Access token is present', function () {",
                   "  pm.expect(jsonData.token).to.be.a('string').and.not.empty;",
                   "});",
-                  "pm.collectionVariables.set('token', jsonData.token);"
+                  "pm.test('Refresh token is present', function () {",
+                  "  pm.expect(jsonData.refreshToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('token', jsonData.token);",
+                  "pm.collectionVariables.set('refreshToken', jsonData.refreshToken);"
                 ]
               }
             }
@@ -192,6 +200,139 @@
                 "exec": [
                   "pm.test('Status code is 400', function () {",
                   "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Exchanges {{refreshToken}} for a fresh {{token}}, without needing to log in again.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('token', jsonData.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh - Invalid Token (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Sanity check that a bogus refresh token is rejected.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"not-a-real-token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revokes the current user's refresh token. Requires a valid access token (Bearer {{token}}) - run Login again afterwards to get a new session."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "  pm.response.to.have.status(204);",
                   "});"
                 ]
               }

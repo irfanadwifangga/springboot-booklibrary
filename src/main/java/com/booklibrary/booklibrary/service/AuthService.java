@@ -7,8 +7,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.booklibrary.booklibrary.dto.request.LoginRequest;
+import com.booklibrary.booklibrary.dto.request.RefreshTokenRequest;
 import com.booklibrary.booklibrary.dto.request.RegisterRequest;
 import com.booklibrary.booklibrary.dto.response.AuthResponse;
+import com.booklibrary.booklibrary.entity.RefreshToken;
 import com.booklibrary.booklibrary.entity.User;
 import com.booklibrary.booklibrary.exception.BadRequestException;
 import com.booklibrary.booklibrary.repository.UserRepository;
@@ -21,13 +23,15 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JwtUtil jwtUtil;
+  private final RefreshTokenService refreshTokenService;
 
   public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-      AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+      AuthenticationManager authenticationManager, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.authenticationManager = authenticationManager;
     this.jwtUtil = jwtUtil;
+    this.refreshTokenService = refreshTokenService;
   }
 
   public void register(RegisterRequest request) {
@@ -51,10 +55,38 @@ public class AuthService {
       throw new BadRequestException("Invalid username or password");
     }
 
-    String token = jwtUtil.generateToken(request.getUsername());
+    User user = userRepository.findByUsername(request.getUsername())
+        .orElseThrow(() -> new BadRequestException("Invalid username or password"));
 
+    String accessToken = jwtUtil.generateToken(user.getUsername());
+    RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+    return buildAuthResponse(accessToken, refreshToken.getToken());
+  }
+
+  public AuthResponse refreshToken(RefreshTokenRequest request) {
+    RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken())
+        .orElseThrow(() -> new BadRequestException("Invalid refresh token"));
+
+    refreshTokenService.verifyExpiration(refreshToken);
+
+    String newAccessToken = jwtUtil.generateToken(refreshToken.getUser().getUsername());
+
+    // No rotation for simplicity: the same refresh token stays valid until its
+    // own expiry. A production system would typically rotate it here too.
+    return buildAuthResponse(newAccessToken, refreshToken.getToken());
+  }
+
+  public void logout(String username) {
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new BadRequestException("User not found"));
+    refreshTokenService.deleteByUser(user);
+  }
+
+  private AuthResponse buildAuthResponse(String accessToken, String refreshTokenValue) {
     AuthResponse response = new AuthResponse();
-    response.setToken(token);
+    response.setToken(accessToken);
+    response.setRefreshToken(refreshTokenValue);
     return response;
   }
 }
