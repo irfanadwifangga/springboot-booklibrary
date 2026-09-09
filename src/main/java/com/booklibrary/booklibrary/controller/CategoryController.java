@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,34 +51,40 @@ public class CategoryController {
     return ResponseEntity.ok(categoryService.getCategoryById(id));
   }
 
-  @Operation(summary = "Create a new category", description = "Add a new book category")
+  @Operation(summary = "Create a new category (ADMIN only)", description = "Add a new book category")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "201", description = "Category created successfully"),
-      @ApiResponse(responseCode = "400", description = "Invalid category data")
+      @ApiResponse(responseCode = "400", description = "Invalid category data"),
+      @ApiResponse(responseCode = "403", description = "Not an ADMIN")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
     CategoryResponse savedCategory = categoryService.createCategory(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedCategory);
   }
 
-  @Operation(summary = "Update an existing category", description = "Update the details of an existing category by its ID")
+  @Operation(summary = "Update an existing category (ADMIN only)", description = "Update the details of an existing category by its ID")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Category updated successfully"),
       @ApiResponse(responseCode = "400", description = "Invalid category data"),
+      @ApiResponse(responseCode = "403", description = "Not an ADMIN"),
       @ApiResponse(responseCode = "404", description = "Category not found")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/{id}")
   public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id,
       @Valid @RequestBody CategoryRequest request) {
     return ResponseEntity.ok(categoryService.updateCategory(id, request));
   }
 
-  @Operation(summary = "Delete a category", description = "Remove a book category by its ID")
+  @Operation(summary = "Delete a category (ADMIN only)", description = "Remove a book category by its ID")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "204", description = "Category deleted successfully"),
+      @ApiResponse(responseCode = "403", description = "Not an ADMIN"),
       @ApiResponse(responseCode = "404", description = "Category not found")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
     categoryService.deleteCategory(id);

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -62,33 +63,39 @@ public class MemberController {
     return ResponseEntity.ok(memberService.getMemberById(id));
   }
 
-  @Operation(summary = "Create a new member", description = "Add a new member to the library")
+  @Operation(summary = "Create a new member (ADMIN only)", description = "Add a new member to the library")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "201", description = "Member created successfully"),
-      @ApiResponse(responseCode = "400", description = "Invalid member data")
+      @ApiResponse(responseCode = "400", description = "Invalid member data"),
+      @ApiResponse(responseCode = "403", description = "Not an ADMIN")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ResponseEntity<MemberResponse> createMember(@Valid @RequestBody MemberRequest request) {
     MemberResponse savedMember = memberService.createMember(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedMember);
   }
 
-  @Operation(summary = "Update an existing member", description = "Update the details of an existing member")
+  @Operation(summary = "Update an existing member (ADMIN only)", description = "Update the details of an existing member")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Member updated successfully"),
+      @ApiResponse(responseCode = "403", description = "Not an ADMIN"),
       @ApiResponse(responseCode = "404", description = "Member not found"),
       @ApiResponse(responseCode = "400", description = "Invalid member data")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/{id}")
   public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id, @Valid @RequestBody MemberRequest request) {
     return ResponseEntity.ok(memberService.updateMember(id, request));
   }
 
-  @Operation(summary = "Delete a member", description = "Remove a member from the library by its ID")
+  @Operation(summary = "Delete a member (ADMIN only)", description = "Remove a member from the library by its ID")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "204", description = "Member deleted successfully"),
+      @ApiResponse(responseCode = "403", description = "Not an ADMIN"),
       @ApiResponse(responseCode = "404", description = "Member not found")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteMember(@PathVariable Long id) {
     memberService.deleteMember(id);

@@ -3,6 +3,8 @@ package com.booklibrary.booklibrary.entity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,4 +30,9 @@ public class User {
   @NotEmpty(message = "Password is mandatory")
   @Column(nullable = false)
   private String password;
+
+  @Schema(description = "Role granted to the user", example = "USER")
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private Role role;
 }

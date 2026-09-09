@@ -1,7 +1,8 @@
 package com.booklibrary.booklibrary.security;
 
-import java.util.Collections;
+import java.util.List;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,7 +28,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     return org.springframework.security.core.userdetails.User
         .withUsername(user.getUsername())
         .password(user.getPassword())
-        .authorities(Collections.emptyList()) // no roles/permissions yet
+        // Spring Security's hasRole('ADMIN') checks for authority "ROLE_ADMIN",
+        // so the "ROLE_" prefix here is required, not a style choice.
+        .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
         .build();
   }
 }

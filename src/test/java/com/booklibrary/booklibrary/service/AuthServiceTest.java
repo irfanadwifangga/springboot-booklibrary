@@ -26,6 +26,7 @@ import com.booklibrary.booklibrary.dto.request.RefreshTokenRequest;
 import com.booklibrary.booklibrary.dto.request.RegisterRequest;
 import com.booklibrary.booklibrary.dto.response.AuthResponse;
 import com.booklibrary.booklibrary.entity.RefreshToken;
+import com.booklibrary.booklibrary.entity.Role;
 import com.booklibrary.booklibrary.entity.User;
 import com.booklibrary.booklibrary.exception.BadRequestException;
 import com.booklibrary.booklibrary.repository.UserRepository;
@@ -68,6 +69,7 @@ class AuthServiceTest {
 
     assertEquals("john", captor.getValue().getUsername());
     assertEquals("hashedPass", captor.getValue().getPassword());
+    assertEquals(Role.USER, captor.getValue().getRole());
   }
 
   @Test
@@ -78,7 +80,8 @@ class AuthServiceTest {
 
     when(userRepository.findByUsername("john")).thenReturn(Optional.of(new User()));
 
-    assertThrows(BadRequestException.class, () -> authService.register(request));
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> authService.register(request));
+    assertEquals("Username is already taken", exception.getMessage());
     verify(userRepository, never()).save(any(User.class));
   }
 
@@ -116,7 +119,8 @@ class AuthServiceTest {
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenThrow(new BadCredentialsException("Bad credentials"));
 
-    assertThrows(BadRequestException.class, () -> authService.login(request));
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> authService.login(request));
+    assertEquals("Invalid username or password", exception.getMessage());
     verify(jwtUtil, never()).generateToken(any(String.class));
     verify(refreshTokenService, never()).createRefreshToken(any(User.class));
   }
@@ -151,7 +155,8 @@ class AuthServiceTest {
 
     when(refreshTokenService.findByToken("unknown-token")).thenReturn(Optional.empty());
 
-    assertThrows(BadRequestException.class, () -> authService.refreshToken(request));
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> authService.refreshToken(request));
+    assertEquals("Invalid refresh token", exception.getMessage());
     verify(jwtUtil, never()).generateToken(any(String.class));
   }
 

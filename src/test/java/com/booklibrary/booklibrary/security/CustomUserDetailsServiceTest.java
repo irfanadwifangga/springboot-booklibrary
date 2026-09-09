@@ -2,6 +2,7 @@ package com.booklibrary.booklibrary.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import com.booklibrary.booklibrary.entity.Role;
 import com.booklibrary.booklibrary.entity.User;
 import com.booklibrary.booklibrary.repository.UserRepository;
 
@@ -32,6 +34,7 @@ class CustomUserDetailsServiceTest {
     user.setId(1L);
     user.setUsername("john");
     user.setPassword("hashedPass");
+    user.setRole(Role.USER);
 
     when(userRepository.findByUsername("john")).thenReturn(Optional.of(user));
 
@@ -39,13 +42,32 @@ class CustomUserDetailsServiceTest {
 
     assertEquals("john", result.getUsername());
     assertEquals("hashedPass", result.getPassword());
+    assertTrue(result.getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_USER")));
+  }
+
+  @Test
+  void loadUserByUsername_whenUserIsAdmin_grantsAdminAuthority() {
+    User admin = new User();
+    admin.setId(2L);
+    admin.setUsername("boss");
+    admin.setPassword("hashedPass");
+    admin.setRole(Role.ADMIN);
+
+    when(userRepository.findByUsername("boss")).thenReturn(Optional.of(admin));
+
+    UserDetails result = customUserDetailsService.loadUserByUsername("boss");
+
+    assertTrue(result.getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")));
   }
 
   @Test
   void loadUserByUsername_whenUserNotFound_throwsUsernameNotFoundException() {
     when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-    assertThrows(UsernameNotFoundException.class,
+    UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class,
         () -> customUserDetailsService.loadUserByUsername("ghost"));
+    assertEquals("User not found: ghost", exception.getMessage());
   }
 }

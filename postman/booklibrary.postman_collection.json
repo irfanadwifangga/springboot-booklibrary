@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Book Library API",
-    "description": "Full collection for the Book Library API (Auth, Categories, Books, Members, Loans). Run order top-to-bottom within each folder: Auth > Categories > Books > Members > Loans. The Cleanup folder is separate on purpose - see its description.",
+    "description": "Full collection for the Book Library API (Auth, Categories, Books, Members, Loans). Run order top-to-bottom within each folder: Auth > Categories > Books > Members > Loans. The Cleanup folder is separate on purpose - see its description.\n\nRBAC: write endpoints (create/update/delete) now require role ADMIN. Register always creates role USER, so promote 'john' to ADMIN via SQL after registering (see the Auth folder description) before running Categories/Books/Members/Loans. See the RBAC check folder for a demonstration of a USER getting 403.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -28,6 +28,10 @@
       "value": ""
     },
     {
+      "key": "userToken",
+      "value": ""
+    },
+    {
       "key": "categoryId",
       "value": ""
     },
@@ -47,7 +51,7 @@
   "item": [
     {
       "name": "Auth",
-      "description": "Register/login/refresh are public. Login saves the access token into {{token}} (used automatically as Bearer auth below) and the refresh token into {{refreshToken}}.",
+      "description": "Register/login/refresh are public. Login saves the access token into {{token}} (used automatically as Bearer auth below) and the refresh token into {{refreshToken}}.\n\nIMPORTANT (RBAC): Register always creates the new user with role USER - there is no public way to create an ADMIN, on purpose. Every write endpoint below (Create/Update/Delete on Categories, Books, Members, and Loans) now requires ADMIN. After running Register for 'john', promote it manually in the database before running the rest of this collection:\n  UPDATE users SET role = 'ADMIN' WHERE username = 'john';\nthen Login again so the new token/authorities are picked up.",
       "item": [
         {
           "name": "Register",
@@ -70,7 +74,7 @@
                 "register"
               ]
             },
-            "description": "Create a new login user. Not the same as a Member (library patron) - this is a login credential.",
+            "description": "Create a new login user (always role USER). Not the same as a Member (library patron) - this is a login credential. Promote to ADMIN manually via SQL if you need this user to pass the write endpoints below.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"john\",\n  \"password\": \"rahasia123\"\n}",
@@ -1249,6 +1253,208 @@
                 "exec": [
                   "pm.test('Status code is 401 or 403', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RBAC check",
+      "description": "Registers a second, plain USER account and proves it gets 403 on ADMIN-only write endpoints, while GET (read) still works. Does not touch {{token}} - the admin session from the Auth folder is untouched after this runs.",
+      "item": [
+        {
+          "name": "Register Regular User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "A second account, left as the default role USER (never promoted to ADMIN).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"regularuser\",\n  \"password\": \"rahasia123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Regular User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Saves this USER's token separately into {{userToken}}, so it doesn't overwrite the admin {{token}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"regularuser\",\n  \"password\": \"rahasia123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('userToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "USER Can Read Books (expect 200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/books",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Read-only endpoints stay open to any authenticated user, not just ADMIN.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "USER Create Category (expect 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            },
+            "description": "A plain USER must be rejected by @PreAuthorize(hasRole('ADMIN')) on this write endpoint.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Should Not Be Created\",\n  \"description\": \"blocked by RBAC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
                   "});"
                 ]
               }

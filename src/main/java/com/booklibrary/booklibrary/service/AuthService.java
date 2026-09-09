@@ -11,6 +11,7 @@ import com.booklibrary.booklibrary.dto.request.RefreshTokenRequest;
 import com.booklibrary.booklibrary.dto.request.RegisterRequest;
 import com.booklibrary.booklibrary.dto.response.AuthResponse;
 import com.booklibrary.booklibrary.entity.RefreshToken;
+import com.booklibrary.booklibrary.entity.Role;
 import com.booklibrary.booklibrary.entity.User;
 import com.booklibrary.booklibrary.exception.BadRequestException;
 import com.booklibrary.booklibrary.repository.UserRepository;
@@ -42,6 +43,9 @@ public class AuthService {
     User user = new User();
     user.setUsername(request.getUsername());
     user.setPassword(passwordEncoder.encode(request.getPassword())); // always hash, never store raw
+    // Never let a client pick their own role via the public /register endpoint -
+    // everyone starts as USER. Promote to ADMIN manually in the DB if needed.
+    user.setRole(Role.USER);
     userRepository.save(user);
   }
 
