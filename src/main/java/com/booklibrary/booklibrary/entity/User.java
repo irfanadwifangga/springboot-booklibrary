@@ -1,5 +1,7 @@
 package com.booklibrary.booklibrary.entity;
 
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,4 +37,14 @@ public class User {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Role role;
+
+  // Both nullable on purpose: existing rows just get NULL when this column is added,
+  // no manual DB migration needed (unlike the NOT NULL "role" column above).
+  @Schema(description = "Consecutive failed login attempts since the last successful login", example = "0")
+  @Column
+  private Integer failedLoginAttempts = 0;
+
+  @Schema(description = "Account is locked until this time due to too many failed login attempts", example = "null")
+  @Column
+  private LocalDateTime lockedUntil;
 }

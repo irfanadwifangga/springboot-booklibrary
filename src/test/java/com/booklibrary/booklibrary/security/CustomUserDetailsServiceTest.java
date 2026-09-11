@@ -1,10 +1,12 @@
 package com.booklibrary.booklibrary.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -60,6 +62,38 @@ class CustomUserDetailsServiceTest {
 
     assertTrue(result.getAuthorities().stream()
         .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")));
+  }
+
+  @Test
+  void loadUserByUsername_whenAccountIsLocked_returnsLockedUserDetails() {
+    User user = new User();
+    user.setId(3L);
+    user.setUsername("locked");
+    user.setPassword("hashedPass");
+    user.setRole(Role.USER);
+    user.setLockedUntil(LocalDateTime.now().plusMinutes(10));
+
+    when(userRepository.findByUsername("locked")).thenReturn(Optional.of(user));
+
+    UserDetails result = customUserDetailsService.loadUserByUsername("locked");
+
+    assertFalse(result.isAccountNonLocked());
+  }
+
+  @Test
+  void loadUserByUsername_whenLockHasExpired_returnsUnlockedUserDetails() {
+    User user = new User();
+    user.setId(4L);
+    user.setUsername("wasLocked");
+    user.setPassword("hashedPass");
+    user.setRole(Role.USER);
+    user.setLockedUntil(LocalDateTime.now().minusMinutes(1)); // lock already expired
+
+    when(userRepository.findByUsername("wasLocked")).thenReturn(Optional.of(user));
+
+    UserDetails result = customUserDetailsService.loadUserByUsername("wasLocked");
+
+    assertTrue(result.isAccountNonLocked());
   }
 
   @Test

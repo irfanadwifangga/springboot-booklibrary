@@ -71,4 +71,14 @@ public class GlobalExceptionHandler {
         null);
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
   }
+
+  @ExceptionHandler(AccountLockedException.class)
+  public ResponseEntity<ErrorResponse> handleAccountLockedException(AccountLockedException ex) {
+    ErrorResponse response = new ErrorResponse(
+        LocalDateTime.now(),
+        HttpStatus.LOCKED.value(),
+        ex.getMessage(),
+        null);
+    return ResponseEntity.status(HttpStatus.LOCKED).body(response);
+  }
 }

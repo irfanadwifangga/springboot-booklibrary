@@ -1,6 +1,8 @@
 package com.booklibrary.booklibrary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -8,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -28,6 +32,7 @@ import com.booklibrary.booklibrary.dto.response.AuthResponse;
 import com.booklibrary.booklibrary.entity.RefreshToken;
 import com.booklibrary.booklibrary.entity.Role;
 import com.booklibrary.booklibrary.entity.User;
+import com.booklibrary.booklibrary.exception.AccountLockedException;
 import com.booklibrary.booklibrary.exception.BadRequestException;
 import com.booklibrary.booklibrary.repository.UserRepository;
 import com.booklibrary.booklibrary.security.JwtUtil;
@@ -123,6 +128,69 @@ class AuthServiceTest {
     assertEquals("Invalid username or password", exception.getMessage());
     verify(jwtUtil, never()).generateToken(any(String.class));
     verify(refreshTokenService, never()).createRefreshToken(any(User.class));
+  }
+
+  @Test
+  void login_whenFailedAttemptsReachThreshold_locksAccount() {
+    LoginRequest request = new LoginRequest();
+    request.setUsername("greg");
+    request.setPassword("wrongPass");
+
+    User user = new User();
+    user.setUsername("greg");
+    user.setFailedLoginAttempts(4); // one more wrong attempt should trip the lock
+
+    when(userRepository.findByUsername("greg")).thenReturn(Optional.of(user));
+    when(authenticationManager.authenticate(any(Authentication.class)))
+        .thenThrow(new BadCredentialsException("Bad credentials"));
+
+    assertThrows(BadRequestException.class, () -> authService.login(request));
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(captor.capture());
+    assertEquals(5, captor.getValue().getFailedLoginAttempts());
+    assertNotNull(captor.getValue().getLockedUntil());
+  }
+
+  @Test
+  void login_whenAccountIsLocked_throwsAccountLockedException() {
+    LoginRequest request = new LoginRequest();
+    request.setUsername("greg");
+    request.setPassword("anyPassword");
+
+    when(authenticationManager.authenticate(any(Authentication.class)))
+        .thenThrow(new LockedException("User account is locked"));
+
+    AccountLockedException exception = assertThrows(AccountLockedException.class, () -> authService.login(request));
+    assertEquals("Account is locked due to too many failed login attempts. Try again in a few minutes.",
+        exception.getMessage());
+    verify(jwtUtil, never()).generateToken(any(String.class));
+  }
+
+  @Test
+  void login_whenSuccessful_resetsFailedLoginAttemptsAndUnlocksAccount() {
+    LoginRequest request = new LoginRequest();
+    request.setUsername("john");
+    request.setPassword("plainPass123");
+
+    User user = new User();
+    user.setId(1L);
+    user.setUsername("john");
+    user.setFailedLoginAttempts(3);
+    user.setLockedUntil(LocalDateTime.now().minusMinutes(1)); // an already-expired lock
+
+    RefreshToken refreshToken = new RefreshToken();
+    refreshToken.setToken("mocked-refresh-token");
+
+    when(userRepository.findByUsername("john")).thenReturn(Optional.of(user));
+    when(jwtUtil.generateToken("john")).thenReturn("mocked-jwt-token");
+    when(refreshTokenService.createRefreshToken(user)).thenReturn(refreshToken);
+
+    authService.login(request);
+
+    assertEquals(0, user.getFailedLoginAttempts());
+    assertNull(user.getLockedUntil());
+    verify(userRepository).save(user);
   }
 
   @Test
