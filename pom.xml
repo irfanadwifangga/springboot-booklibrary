@@ -109,14 +109,6 @@
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<!-- Provides @AutoConfigureMockMvc - not pulled in automatically by the split
-			     spring-boot-starter-*-test artifacts this project uses instead of the
-			     old all-in-one spring-boot-starter-test. -->
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-test-autoconfigure</artifactId>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
