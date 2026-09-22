@@ -1,0 +1,30 @@
+name: CI
+
+# Runs the build + full test suite on every push and pull request, so a broken
+# build/test is caught before it gets merged - not after.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven # caches ~/.m2, so dependencies aren't re-downloaded every run
+
+      - name: Build and run tests
+        # Unit tests use Mockito (no DB needed) and integration tests run against
+        # an in-memory H2 DB (src/test/resources/application.properties) - so this
+        # needs no Postgres service container, no secrets, nothing extra to set up.
+        run: mvn -B clean verify
