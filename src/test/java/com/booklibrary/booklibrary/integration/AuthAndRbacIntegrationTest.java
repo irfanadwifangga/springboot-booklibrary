@@ -35,8 +35,7 @@ class AuthAndRbacIntegrationTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   private UserRepository userRepository;

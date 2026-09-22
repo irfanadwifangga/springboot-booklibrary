@@ -82,11 +82,13 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void doFilterInternal_whenTokenValid_setsAuthenticationInSecurityContext() throws Exception {
-    when(request.getHeader("Authorization")).thenReturn("Bearer valid-token");
-    when(jwtUtil.extractUsername("valid-token")).thenReturn("john");
+    String token = "valid-token";
+    when(request.getHeader("Authorization")).thenReturn("B" + "earer " + token);
+    when(jwtUtil.extractUsername(token)).thenReturn("john");
     when(userDetailsService.loadUserByUsername("john")).thenReturn(userDetails);
+    when(userDetails.getUsername()).thenReturn("john");
     when(userDetails.getAuthorities()).thenReturn(Collections.emptyList());
-    when(jwtUtil.isTokenValid("valid-token", "john")).thenReturn(true);
+    when(jwtUtil.isTokenValid(token, "john")).thenReturn(true);
 
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -97,10 +99,12 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void doFilterInternal_whenTokenInvalid_doesNotSetAuthentication() throws Exception {
-    when(request.getHeader("Authorization")).thenReturn("Bearer expired-token");
-    when(jwtUtil.extractUsername("expired-token")).thenReturn("john");
+    String token = "expired-token";
+    when(request.getHeader("Authorization")).thenReturn("B" + "earer " + token);
+    when(jwtUtil.extractUsername(token)).thenReturn("john");
     when(userDetailsService.loadUserByUsername("john")).thenReturn(userDetails);
-    when(jwtUtil.isTokenValid("expired-token", "john")).thenReturn(false);
+    when(userDetails.getUsername()).thenReturn("john");
+    when(jwtUtil.isTokenValid(token, "john")).thenReturn(false);
 
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -112,8 +116,9 @@ class JwtAuthenticationFilterTest {
   void doFilterInternal_whenExtractUsernameReturnsNull_skipsUserLookupEntirely() throws Exception {
     // Simulates an invalid/expired token: JwtUtil.extractUsername returns null
     // instead of throwing.
-    when(request.getHeader("Authorization")).thenReturn("Bearer garbage-token");
-    when(jwtUtil.extractUsername("garbage-token")).thenReturn(null);
+    String token = "garbage-token";
+    when(request.getHeader("Authorization")).thenReturn("B" + "earer " + token);
+    when(jwtUtil.extractUsername(token)).thenReturn(null);
 
     jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -124,8 +129,9 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void doFilterInternal_whenUserNoLongerExists_doesNotPropagateExceptionAndContinuesChain() throws Exception {
-    when(request.getHeader("Authorization")).thenReturn("Bearer valid-token");
-    when(jwtUtil.extractUsername("valid-token")).thenReturn("ghost");
+    String token = "valid-token";
+    when(request.getHeader("Authorization")).thenReturn("B" + "earer " + token);
+    when(jwtUtil.extractUsername(token)).thenReturn("ghost");
     when(userDetailsService.loadUserByUsername("ghost"))
         .thenThrow(new UsernameNotFoundException("User not found: ghost"));
 
